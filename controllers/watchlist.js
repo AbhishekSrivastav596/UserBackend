@@ -62,12 +62,10 @@ export const removeStock = async (req, res) => {
 
   if (!user) return res.sendStatus(404)
 
-  await prisma.watchlist.delete({
+  await prisma.watchlist.deleteMany({
     where: {
-      userId_symbol: {
-        userId: user.id,   // ✅ THIS is required
-        symbol
-      }
+      userId: user.id,
+      symbol: symbol.toUpperCase()
     }
   })
 
