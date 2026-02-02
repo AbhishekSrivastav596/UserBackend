@@ -8,11 +8,18 @@ export const search = async (req, res) => {
 };
 
 export const getWatchlist = async (req, res) => {
-  const userId = req.query.userId;
+const email = req.email;
 
-  const stocks = await prisma.watchlist.findMany({
-    where: { userId }
-  });
+const user = await prisma.user.findUnique({
+  where: { email }
+});
+
+if (!user) return res.json([]);
+
+const stocks = await prisma.watchlist.findMany({
+  where: { userId: user.id }
+});
+
 
   if (!stocks.length) return res.json([]);
 
@@ -29,7 +36,9 @@ export const getWatchlist = async (req, res) => {
 };
 
 export const addStock = async (req, res) => {
-  const { symbol, name, email } = req.body
+  const { symbol, name } = req.body
+  const email = req.email
+
 
   let user = await prisma.user.findUnique({
     where: { email }
@@ -41,19 +50,27 @@ export const addStock = async (req, res) => {
     })
   }
 
-  await prisma.watchlist.create({
-    data: {
+ await prisma.watchlist.upsert({
+  where: {
+    userId_symbol: {
       userId: user.id,
-      symbol,
-      name
+      symbol: symbol.toUpperCase()
     }
-  })
+  },
+  update: {},
+  create: {
+    userId: user.id,
+    symbol: symbol.toUpperCase(),
+    name
+  }
+})
+
 
   res.json({ ok: true })
 }
 
 export const removeStock = async (req, res) => {
-  const { email } = req.query
+  const email = req.email      
   const { symbol } = req.params
 
   const user = await prisma.user.findUnique({
@@ -71,3 +88,4 @@ export const removeStock = async (req, res) => {
 
   res.json({ ok: true })
 }
+

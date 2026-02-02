@@ -8,12 +8,17 @@ const app = express();
 
 app.use(cors({ origin: env.clientUrl }));
 app.use(express.json());
-app.use((req, res, next) => {
-  console.log(req.method, req.url);
-  next();
-});
+const requireUser = (req, res, next) => {
+  const email = req.headers["x-user-email"];
+  if (!email) return res.sendStatus(401);
 
-app.use("/api/stocks", stockRoutes);
-app.use("/api/watchlist", watchlistRoutes);
+  req.email = email;
+  console.log("Authenticated user:", email);
+  next();
+};
+
+
+app.use("/api/stocks", requireUser, stockRoutes);
+app.use("/api/watchlist", requireUser, watchlistRoutes);
 
 export default app;
